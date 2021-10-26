@@ -1,0 +1,23 @@
+{
+  "name": "vue-rolling-marquee",
+  "version": "0.0.1",
+  "description": "这是一个Vue组件，提供一个自动滚动的字幕(跑马灯)。This is a Vue component that provides an auto-scrolling marquee.",
+  "author": "Yesifang",
+  "license": "MIT",
+  "private": false,
+  "main": "index.js",
+  "homepage": "https://yesifang.com",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:SuperYesifang/vue-rolling-marquee.git"
+  },
+  "scripts": {},
+  "keywords": [
+    "vue",
+    "vue2",
+    "auto roll",
+    "rolling",
+    "marquee",
+    "auto roll marquee"
+  ]
+}

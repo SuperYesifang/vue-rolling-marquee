@@ -1,5 +1,18 @@
-# vue-rolling-marquee
+# y
 
-> 这是一个 Vue 组件，提供一个自动滚动的字幕(跑马灯)。This is a Vue component that provides an auto-scrolling marquee.
+> A Vue.js project
 
-正在开发当中，当前暂时为空...
+## Build Setup
+
+```bash
+# install dependencies
+npm install
+
+# serve with hot reload at localhost:8080
+npm run dev
+
+# build for production with minification
+npm run build
+```
+
+For detailed explanation on how things work, consult the [docs for vue-loader](http://vuejs.github.io/vue-loader).

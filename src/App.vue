@@ -17,7 +17,9 @@
 
 <style>
 	.rolling-marquee {
+		margin: 100px auto;
+		width: 200px;
+		height: 100px; /* Height must be set for vue-rolling-marquee */
 		border: 1px solid #000;
-		height: 60px;
 	}
 </style>

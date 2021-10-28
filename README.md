@@ -10,7 +10,7 @@
 > This is a Vue component that provides an auto-scrolling marquee.
 
 <div align="center">
-  <a href="https://nodei.co/npm/vue-scrolling-ul/"><img src="https://nodei.co/npm/vue-scrolling-ul.png?downloads=true&downloadRank=true&stars=true"></a>
+  <a href="https://nodei.co/npm/vue-rolling-marquee/"><img src="https://nodei.co/npm/vue-rolling-marquee.png?downloads=true&downloadRank=true&stars=true"></a>
 </div>
 
 ## Run Simple Demo

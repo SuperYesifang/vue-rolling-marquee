@@ -1,6 +1,6 @@
 <template>
 	<div id="app">
-		<Main></Main>
+		<Main class="rolling-marquee">Hello World</Main>
 	</div>
 </template>
 
@@ -15,4 +15,9 @@
 	};
 </script>
 
-<style></style>
+<style>
+	.rolling-marquee {
+		border: 1px solid #000;
+		height: 60px;
+	}
+</style>

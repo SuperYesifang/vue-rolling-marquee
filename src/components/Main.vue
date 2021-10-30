@@ -1,6 +1,9 @@
 <template>
 	<div id="vue-rolling-marquee" ref="rolling-marquee-container">
-		<div class="rolling-content" ref="rolling-marquee-content" :style="{ transform: `translate(calc(-50% + ${startPoint.x}px),calc(-50% + ${startPoint.y}px))`, animationDuration }">
+		<div class="rolling-content" ref="rolling-marquee-content" :style="{ transform: `translate(${transitionT ? endPoint.x : startPoint.x}px,${transitionT ? endPoint.y : startPoint.y}px)`, animationDuration, animationDelay: (shadow ? delayT : 0 ) + 's', transitionDuration }">
+			<slot />
+		</div>
+		<div v-if="shadow" class="rolling-content shadow" :style="{ transform: `translate(${startPoint.x}px,${startPoint.y}px)`, animationDuration, animationDelay }">
 			<slot />
 		</div>
 	</div>
@@ -20,10 +23,22 @@
 				validator: val => typeof val == "number" || val == "30s",
 				default: "30s"
 			},
-			duration: Number
+			duration: Number,
+			shadow: {
+				type: Boolean,
+				default: true
+			},
+			walk: {
+				type: Boolean,
+				default: true
+			}
 		},
 		data() {
 			return {
+				W: undefined,
+				w: undefined,
+				H: undefined,
+				h: undefined,
 				absX: undefined,
 				absY: undefined,
 				absZ: undefined,
@@ -60,20 +75,43 @@
 			},
 			startPoint() {
 				return {
-					x: ~(this.localDirection.x * this.absX) + 1 || 0,
-					y: ~(this.localDirection.y * this.absY) + 1 || 0
+					x: (~(this.localDirection.x * this.absX) + 1 + (this.W - this.w)/2 || 0),
+					y: (~(this.localDirection.y * this.absY) + 1 + (this.H  - this.h)/2 || 0)
 				};
 			},
 			endPoint() {
 				return {
-					x: this.localDirection.x * this.absX || 0,
-					y: this.localDirection.y * this.absY || 0
+					x: (this.localDirection.x * this.absX + (this.W - this.w)/2 || 0),
+					y: (this.localDirection.y * this.absY + (this.H - this.h)/2 || 0)
 				};
 			},
+			animationT() {
+				if (this.speed != "30s") return (2 * this.absZ) / this.speed;
+				else if (this.duration) return this.duration / 1000;
+				return this.absZ / 15;
+			},
 			animationDuration() {
-				if (this.speed != "30s") return (2 * this.absZ) / this.speed + "s";
-				else if (this.duration) return this.duration / 1000 + "s";
-				return this.absZ / 15 + "s";
+				return (this.shadow ? 2 * this.delayT : this.animationT) + "s";
+			},
+			delayT() {
+				let angle = this.localDirection.angle,
+					radian = Math.atan(this.H / this.W);
+				if ((angle >= radian && angle <= Math.PI - radian) || (angle >= Math.PI + radian && angle <= 2 * Math.PI - radian))
+					return this.animationT * this.H / (this.H + this.h);
+				else
+					return this.animationT * this.W / (this.W + this.w);
+			},
+			animationDelay() {
+				return this.walk ? 0 : this.delayT + "s";
+			},
+			transitionT() {
+				console.log(this.endPoint.x, this.endPoint.y)
+				if(Math.abs(this.endPoint.x) <= 0.5) return this.animationT * this.h / (2 * this.absZ)
+				if(Math.abs(this.endPoint.y) <= 0.5) return this.animationT * this.w / (2 * this.absZ)
+				return 0
+			},
+			transitionDuration() {
+				return this.transitionT + "s";
 			}
 		},
 		watch: {
@@ -89,10 +127,10 @@
 				this.$nextTick(() => {
 					let container = this.$refs["rolling-marquee-container"],
 						content = this.$refs["rolling-marquee-content"],
-						W = container.clientWidth,
-						H = container.clientHeight,
-						w = content.clientWidth,
-						h = content.clientHeight,
+						W = this.W = container.clientWidth,
+						H = this.H = container.clientHeight,
+						w = this.w = content.clientWidth,
+						h = this.h = content.clientHeight,
 						angle = localDirection.angle,
 						radian = Math.atan(H / W);
 					if ((angle >= radian && angle <= Math.PI - radian) || (angle >= Math.PI + radian && angle <= 2 * Math.PI - radian)) {
@@ -112,10 +150,13 @@
 				style.innerHTML = `
 					@keyframes vue-rolling-marquee {
 						0% {
-							transform: translate(calc(-50% + ${this.startPoint.x}px),calc(-50% + ${this.startPoint.y}px))
+							transform: translate(${this.startPoint.x}px,${this.startPoint.y}px)
 						}
+						${this.shadow ? `${50 * this.animationT / this.delayT}% {
+							transform: translate(${this.endPoint.x}px,${this.endPoint.y}px)
+						}` : ""}
 						100% {
-							transform: translate(calc(-50% + ${this.endPoint.x}px),calc(-50% + ${this.endPoint.y}px))
+							transform: translate(${this.endPoint.x}px,${this.endPoint.y}px)
 						}
 					}
 				`;
@@ -133,11 +174,16 @@
 		position: relative
 		overflow: hidden
 		.rolling-content
-			position: absolute
-			top: 50%
-			left: 50%
+			width: fit-content
+			transform: translate(0, 0)
 			animation-name: vue-rolling-marquee
 			animation-timing-function: linear
 			animation-iteration-count: infinite
-			animation-delay: 0s
+			transition-timing-function: linear
+			transition-property: transform
+			&.shadow
+				position: absolute
+				top: 0
+				left: 0
+
 </style>

@@ -1,6 +1,6 @@
 <template>
 	<div id="app">
-		<Main class="rolling-marquee">Hello World</Main>
+		<Main class="rolling-marquee" direction="left" :shadow="true">Hello World</Main>
 	</div>
 </template>
 
@@ -18,8 +18,8 @@
 <style>
 	.rolling-marquee {
 		margin: 100px auto;
-		width: 200px;
-		height: 100px; /* Height must be set for vue-rolling-marquee */
+		width: 150px;
+		height: 50px;
 		border: 1px solid #000;
 	}
 </style>

@@ -1,9 +1,9 @@
 <template>
 	<div id="vue-rolling-marquee" ref="rolling-marquee-container">
-		<div class="rolling-content" ref="rolling-marquee-content" :style="{ transform: `translate(${transitionT ? endPoint.x : startPoint.x}px,${transitionT ? endPoint.y : startPoint.y}px)`, animationDuration, animationDelay: (shadow ? delayT : 0 ) + 's', transitionDuration }">
+		<div class="rolling-content" ref="rolling-marquee-content" :style="{ transform,...(animationPlayS ? {} : {animationDuration, animationDelay: (prompt ? (delayT + promptDelay) : 0 ) + 's', animationPlayState })}">
 			<slot />
 		</div>
-		<div v-if="shadow" class="rolling-content shadow" :style="{ transform: `translate(${startPoint.x}px,${startPoint.y}px)`, animationDuration, animationDelay }">
+		<div v-if="shadow" v-show="!animationPlayS" class="rolling-content shadow" :style="{ transform: `translate(${this.startPoint.x}px,${this.startPoint.y}px)`, animationDuration, animationDelay, animationPlayState }">
 			<slot />
 		</div>
 	</div>
@@ -28,9 +28,13 @@
 				type: Boolean,
 				default: true
 			},
-			walk: {
+			prompt: {
 				type: Boolean,
-				default: true
+				default: false
+			},
+			promptGap: {
+				type: Number,
+				default: 20
 			}
 		},
 		data() {
@@ -97,26 +101,57 @@
 				let angle = this.localDirection.angle,
 					radian = Math.atan(this.H / this.W);
 				if ((angle >= radian && angle <= Math.PI - radian) || (angle >= Math.PI + radian && angle <= 2 * Math.PI - radian))
-					return this.animationT * this.H / (this.H + this.h);
+					return this.animationT * this.H / (this.H + this.h) + this.promptDelay;
 				else
-					return this.animationT * this.W / (this.W + this.w);
+					return this.animationT * this.W / (this.W + this.w) + this.promptDelay;
 			},
 			animationDelay() {
-				return this.walk ? 0 : this.delayT + "s";
+				return (this.prompt ? this.promptDelay : this.delayT) + "s";
 			},
 			transitionT() {
-				console.log(this.endPoint.x, this.endPoint.y)
-				if(Math.abs(this.endPoint.x) <= 0.5) return this.animationT * this.h / (2 * this.absZ)
-				if(Math.abs(this.endPoint.y) <= 0.5) return this.animationT * this.w / (2 * this.absZ)
+				if(this.prompt && Math.abs(this.endPoint.x - this.startPoint.x) <= 0.5 && this.H < this.h) return this.animationT * this.h / (2 * this.absZ)
+				if(this.prompt && Math.abs(this.endPoint.y - this.startPoint.y) <= 0.5 && this.W < this.w) return this.animationT * this.w / (2 * this.absZ)
 				return 0
+			},
+			transform() {
+				if(this.prompt && Math.abs(this.endPoint.x - this.startPoint.x) <= 0.5) return `translate(${this.endPoint.x}px,0px)`;
+				if(this.prompt && Math.abs(this.endPoint.y - this.startPoint.y) <= 0.5) return `translate(0px,${this.endPoint.y}px)`;
+				return `translate(${this.startPoint.x}px,${this.startPoint.y}px)`
 			},
 			transitionDuration() {
 				return this.transitionT + "s";
+			},
+			animationPlayS() {
+				return this.prompt && !this.transitionT;
+			},
+			animationPlayState() {
+				return this.animationPlayS ? "paused" : "running"
+			},
+			promptD1() {
+				if(this.prompt && Math.abs(this.endPoint.x - this.startPoint.x) <= 0.5 && this.H < this.h) return this.animationT * (this.h - this.H) / (2 * this.absZ)
+				if(this.prompt && Math.abs(this.endPoint.y - this.startPoint.y) <= 0.5 && this.W < this.w) return this.animationT * (this.w - this.W) / (2 * this.absZ)
+				return 0
+			},
+			promptD2() {
+				if((this.prompt && Math.abs(this.endPoint.x - this.startPoint.x) <= 0.5 && this.H < this.h) || (this.prompt && Math.abs(this.endPoint.y - this.startPoint.y) <= 0.5 && this.W < this.w)) return this.animationT * (this.promptGap) / (2 * this.absZ)
+				return 0
+			},
+			promptDelay() {
+				return this.promptD1 + this.promptD2
 			}
 		},
 		watch: {
 			localDirection(val) {
 				this.init(val);
+			},
+			transform() {
+				if(this.transitionT) {
+					setTimeout(()=>{
+						let el = this.$refs["rolling-marquee-content"];
+						el.style.transitionDuration = this.transitionDuration;
+						el.style.transform = `translate(${this.endPoint.x}px,${this.endPoint.y}px)`
+					})
+				}
 			}
 		},
 		methods: {
@@ -152,7 +187,7 @@
 						0% {
 							transform: translate(${this.startPoint.x}px,${this.startPoint.y}px)
 						}
-						${this.shadow ? `${50 * this.animationT / this.delayT}% {
+						${this.shadow ? `${50 * this.animationT /  this.delayT}% {
 							transform: translate(${this.endPoint.x}px,${this.endPoint.y}px)
 						}` : ""}
 						100% {

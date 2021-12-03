@@ -1,6 +1,11 @@
 <template>
 	<div id="app">
-		<Main class="rolling-marquee" direction="left" :shadow="true">Hello World</Main>
+		<Main class="rolling-marquee" direction="left" :shadow="true">
+			<div class="lyc">Hello World</div>
+		</Main>
+		<Main class="rolling-marquee prompt" direction="left" :shadow="true" :prompt="true">
+			<div class="lyc">Hello World</div>
+		</Main>
 	</div>
 </template>
 
@@ -18,8 +23,14 @@
 <style>
 	.rolling-marquee {
 		margin: 100px auto;
-		width: 150px;
-		height: 50px;
+		width: 200px;
+		height: 100px;
 		border: 1px solid #000;
+	}
+	.prompt {
+		width: 80px;
+	}
+	.lyc {
+		white-space: nowrap;
 	}
 </style>

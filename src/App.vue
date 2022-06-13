@@ -1,9 +1,12 @@
 <template>
 	<div id="app">
-		<Main class="rolling-marquee" direction="left" :shadow="true">
+		<Main class="rolling-marquee" direction="left" :shadow="true" :prompt="true">
 			<div class="lyc">Hello World</div>
 		</Main>
 		<Main class="rolling-marquee prompt" direction="left" :shadow="true" :prompt="true">
+			<div class="lyc">Hello World</div>
+		</Main>
+		<Main class="rolling-marquee prompt" direction="45deg" :shadow="true" :prompt="true">
 			<div class="lyc">Hello World</div>
 		</Main>
 	</div>
@@ -23,8 +26,8 @@
 <style>
 	.rolling-marquee {
 		margin: 100px auto;
-		width: 200px;
-		height: 100px;
+		width: calc(100% - 500px);
+		height: 50px;
 		border: 1px solid #000;
 	}
 	.prompt {

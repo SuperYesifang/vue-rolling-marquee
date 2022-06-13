@@ -1,9 +1,9 @@
 <template>
 	<div id="vue-rolling-marquee" ref="rolling-marquee-container">
-		<div class="rolling-content" ref="rolling-marquee-content" :style="{ transform,...(animationPlayS ? {} : {animationDuration, animationDelay: (prompt ? (delayT + promptDelay) : 0 ) + 's', animationPlayState })}">
+		<div v-if="inited" class="rolling-content" ref="rolling-marquee-content" :style="{ transform, animationName: `vue-rolling-marquee${rid}`,...(animationPlayS ? {} : {animationDuration, animationDelay: (prompt ? (delayT + promptDelay) : 0 ) + 's', animationPlayState })}">
 			<slot />
 		</div>
-		<div v-if="shadow" v-show="!animationPlayS" class="rolling-content shadow" :style="{ transform: `translate(${this.startPoint.x}px,${this.startPoint.y}px)`, animationDuration, animationDelay, animationPlayState }">
+		<div v-if="shadow && inited" v-show="!animationPlayS" class="rolling-content shadow" :style="{ transform: `translate(${this.startPoint.x}px,${this.startPoint.y}px)`, animationName: `vue-rolling-marquee${rid}`, animationDuration, animationDelay, animationPlayState }">
 			<slot />
 		</div>
 	</div>
@@ -13,6 +13,10 @@
 	export default {
 		name: "vue-rolling-marquee",
 		props: {
+			rid: {
+				type: [String, Number],
+				default: () => Math.random().toString(16).slice(2)
+			},
 			direction: {
 				type: String,
 				validator: val => ["top", "right", "bottom", "left"].includes(val) || /(?<=^\s*)[+-]?\d*\.?\d+deg(?=\s*)/.test(val),
@@ -46,7 +50,10 @@
 				absX: undefined,
 				absY: undefined,
 				absZ: undefined,
-				style: null
+				style: null,
+				listener: null,
+				timer: null,
+				inited: false
 			};
 		},
 		computed: {
@@ -109,14 +116,16 @@
 				return (this.prompt ? this.promptDelay : this.delayT) + "s";
 			},
 			transitionT() {
-				if(this.prompt && Math.abs(this.endPoint.x - this.startPoint.x) <= 0.5 && this.H < this.h) return this.animationT * this.h / (2 * this.absZ)
-				if(this.prompt && Math.abs(this.endPoint.y - this.startPoint.y) <= 0.5 && this.W < this.w) return this.animationT * this.w / (2 * this.absZ)
+				if (this.prompt && Math.abs(this.endPoint.x - this.startPoint.x) <= 0.5 && this.H < this.h) return this.animationT * this.h / (2 * this.absZ)
+				if (this.prompt && Math.abs(this.endPoint.y - this.startPoint.y) <= 0.5 && this.W < this.w) return this.animationT * this.w / (2 * this.absZ)
+				if (this.prompt && Math.abs(this.endPoint.x - this.startPoint.x) > 0.5 && Math.abs(this.endPoint.y - this.startPoint.y) > 0.5 && ((this.H < this.h) || (this.W < this.w))) return this.animationT * this.absZ / (2 * this.absZ)
 				return 0
 			},
 			transform() {
 				if(this.prompt && Math.abs(this.endPoint.x - this.startPoint.x) <= 0.5) return `translate(${this.endPoint.x}px,0px)`;
 				if(this.prompt && Math.abs(this.endPoint.y - this.startPoint.y) <= 0.5) return `translate(0px,${this.endPoint.y}px)`;
-				return `translate(${this.startPoint.x}px,${this.startPoint.y}px)`
+				if(this.prompt && Math.abs(this.endPoint.x - this.startPoint.x) > 0.5 && Math.abs(this.endPoint.y - this.startPoint.y) > 0.5) return `translate(${(this.endPoint.x - this.startPoint.x) / 2},${(this.endPoint.y - this.startPoint.y) / 2}px)`;
+				return `translate(${this.endPoint.x}px,${this.endPoint.y}px)`
 			},
 			transitionDuration() {
 				return this.transitionT + "s";
@@ -129,6 +138,7 @@
 			},
 			promptD1() {
 				if(this.prompt && Math.abs(this.endPoint.x - this.startPoint.x) <= 0.5 && this.H < this.h) return this.animationT * (this.h - this.H) / (2 * this.absZ)
+				if(this.prompt && Math.abs(this.endPoint.y - this.startPoint.y) <= 0.5 && this.W < this.w) return this.animationT * (this.w - this.W) / (2 * this.absZ)
 				if(this.prompt && Math.abs(this.endPoint.y - this.startPoint.y) <= 0.5 && this.W < this.w) return this.animationT * (this.w - this.W) / (2 * this.absZ)
 				return 0
 			},
@@ -159,6 +169,14 @@
 				return new RegExp(`(?<=^\\s*)[+-]?\\d*\\.?\\d+${usefulUnit}(?=${uselessUnit}\\s*)`);
 			},
 			init(localDirection = this.localDirection) {
+				this.listener = true;
+				this.W = undefined;
+				this.w = undefined;
+				this.H = undefined;
+				this.h = undefined;
+				this.absX = undefined;
+				this.absY = undefined;
+				this.absZ = undefined;
 				this.$nextTick(() => {
 					let container = this.$refs["rolling-marquee-container"],
 						content = this.$refs["rolling-marquee-content"],
@@ -179,11 +197,21 @@
 					this.registAnimation();
 				});
 			},
+			resize() {
+				if (this.timer) {
+					clearTimeout(this.timer);
+					this.inited = false;
+				}
+				this.timer = setTimeout(() => {
+					this.inited = true;
+					this.init();
+				}, 500)
+			},
 			registAnimation() {
 				if (this.style) this.style.remove();
 				let style = (this.style = document.createElement("style"));
 				style.innerHTML = `
-					@keyframes vue-rolling-marquee {
+					@keyframes vue-rolling-marquee${this.rid} {
 						0% {
 							transform: translate(${this.startPoint.x}px,${this.startPoint.y}px)
 						}
@@ -198,8 +226,16 @@
 				document.body.appendChild(style);
 			}
 		},
+		activated() {
+			if (!this.listener) window.addEventListener("resize", this.resize);
+		},
+		deactivated() {
+			this.listener = null;
+			window.removeEventListener("resize", this.resize);
+		},
 		mounted() {
-			this.init();
+			this.resize();
+			window.addEventListener("resize", this.resize);
 		}
 	};
 </script>
@@ -211,7 +247,6 @@
 		.rolling-content
 			width: fit-content
 			transform: translate(0, 0)
-			animation-name: vue-rolling-marquee
 			animation-timing-function: linear
 			animation-iteration-count: infinite
 			transition-timing-function: linear

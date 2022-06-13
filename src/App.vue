@@ -1,6 +1,6 @@
 <template>
 	<div id="app">
-		<Main class="rolling-marquee" direction="left" :shadow="true" :prompt="true">
+		<Main class="rolling-marquee" direction="45deg" :shadow="true" :prompt="true">
 			<div class="lyc">Hello World</div>
 		</Main>
 		<Main class="rolling-marquee prompt" direction="left" :shadow="true" :prompt="true">
